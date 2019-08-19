@@ -1,0 +1,12 @@
+//  LEGACY FILES (check the order of importings)
+//  _____________________________________________
+
+@import "legacyFiles/**/*";
+
+//
+//  NEW CODE
+//  _____________________________________________
+
+// Core components
+@import '_core.scss';
+// ______________________________________________

@@ -1,0 +1,19 @@
+//
+//  kit bks MOBILE FIRST
+//  ---------------------------------------------
+$screen__mobile: 320px; /* smartphones, portrait iPhone, portrait 480x320 phones (Android) */
+$screen__mobile_landscape: 480px; /* smartphones, Android phones, landscape iPhone */
+$screen__tablet: 600px; /* portrait tablets, portrait iPad, e-readers (Nook/Kindle), landscape 800x480 phones (Android) */
+$screen__tablet: 801px; /* tablet, landscape iPad, lo-res laptops ands desktops */
+$screen__desktop: 1025px; /* big landscape tablets, laptops, and desktops */
+$screen__big: 1281px; /* big laptops and desktops */
+$screen__hi: 1441px; /* hi-res laptops and desktops */
+
+//
+//  kit variables
+//  ---------------------------------------------
+$gutter: 16px;
+$legacyGutter: 15px; // we need to eliminate this gutter and replate with 16px gutter, just because 15px is not divisible by 2
+$lgutter: $legacyGutter;
+
+$layout-max-w: 1170px; // is the main wrapper/container

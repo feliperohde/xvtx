@@ -1,0 +1,196 @@
+
+@mixin above($bk) {
+
+    @each $current-bk in $bk {
+      @media only screen and (min-width: #{$current-bk}) {
+        @content;
+      }
+    }
+}
+
+@mixin below($bk) {
+
+    @each $current-bk in $bk {
+      @media only screen and (max-width: #{$current-bk}) {
+        @content;
+      }
+    }
+}
+
+@mixin retina {
+  @media
+    only screen and (-webkit-min-device-pixel-ratio: 2),
+    only screen and (min--moz-device-pixel-ratio: 2),
+    only screen and (-o-min-device-pixel-ratio: 2/1),
+    only screen and (min-device-pixel-ratio: 2),
+    only screen and (min-resolution: 192dpi),
+    only screen and (min-resolution: 2dppx) {
+    @content;
+  }
+}
+
+@mixin rabove($bk) {
+  @media
+    only screen and (-webkit-min-device-pixel-ratio: 2),
+    only screen and (min--moz-device-pixel-ratio: 2),
+    only screen and (-o-min-device-pixel-ratio: 2/1),
+    only screen and (min-device-pixel-ratio: 2),
+    only screen and (min-resolution: 192dpi),
+    only screen and (min-resolution: 2dppx),
+    only screen and (min-width: #{$bk}) {
+    @content;
+  }
+}
+
+@mixin rbelow($bk) {
+  @media
+    only screen and (-webkit-min-device-pixel-ratio: 2),
+    only screen and (min--moz-device-pixel-ratio: 2),
+    only screen and (-o-min-device-pixel-ratio: 2/1),
+    only screen and (min-device-pixel-ratio: 2),
+    only screen and (min-resolution: 192dpi),
+    only screen and (min-resolution: 2dppx),
+    only screen and (max-width: #{$bk}) {
+    @content;
+  }
+}
+
+
+//
+//  some utils classes
+//  _____________________________________________
+
+
+// instant create a element inside pseudo selectors like :before and :after;
+@mixin pseudo() {
+    content: " ";
+    font-size: 0;
+    display: block;
+}
+
+.pseudo {
+    @include pseudo();
+}
+
+
+@mixin wrapper() {
+  margin: 0 auto;
+  max-width: $layout-max-w;
+
+  padding: 0 $gutter;
+
+    &:before, &:after {
+        @include pseudo();
+        clear: both;
+    }
+}
+
+.wrapper {
+  @include wrapper();
+}
+
+@mixin clear() {
+    &:before, &:after {
+        @include pseudo();
+        clear: both;
+    }
+}
+
+.clear {
+    @include clear();
+}
+
+
+//
+//  List helper
+//  _____________________________________________
+.hl,
+.horizoltal-list {
+    overflow-x: auto;
+    white-space: nowrap;
+    font-size: 0;
+}
+
+.hli,
+.horizoltal-list-item {
+    display: inline-block;
+    vertical-align: top;
+    white-space: normal;
+
+    font-size: 1rem;
+}
+
+
+//
+//  Image helper
+//  _____________________________________________
+
+.img-cropWrapper {
+    position:relative;
+    overflow: hidden;
+    line-height: 0;
+    font-size: 0;
+
+    padding-top: 10%;
+
+    > img {
+        top: -100%;
+        bottom: -100%;
+        left: -100%;
+        right: -100%;
+        position: absolute;
+        margin: auto;
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        max-width: none;
+        max-height: none;
+    }
+}
+
+.imgc {
+    @extend .img-cropWrapper;
+}
+
+.imgcI {
+    top: -100%;
+    bottom: -100%;
+    left: -100%;
+    right: -100%;
+    position: absolute;
+    margin: auto;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+}
+
+//
+//  mixins
+//  _____________________________________________
+
+// html {
+//   font-size: 62.5%;  Sets up the Base 10 stuff
+// }
+
+@mixin font-size($sizeValue){
+    $remValue: $sizeValue;
+    $pxValue: ($sizeValue * 10);
+    font-size: #{"${pxValue}px"};
+    font-size: #{"${remValue}rem"};
+}
+
+
+@mixin bg-variant($color){
+  background-color: $color;
+
+  &[href] {
+    &:hover,
+    &:focus {
+      background-color: darken($color, 5%);
+    }
+  }
+}
