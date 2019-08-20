@@ -7,8 +7,9 @@
   "scripts": {
     "start": "gulp dev",
     "build": "gulp build",
-    "deploy-master": "git checkout master && git pull origin master && gulp build && node node_modules/xvtx deploy --account PROJECTACCOUNTNAME --pathFiles arquivos && git add . && git commit -m 'deploy prod' && git push origin master",
-    "deploy-develop": "git checkout develop && git pull origin develop && gulp build && node node_modules/xvtx deploy --account PROJECTACCOUNTNAME --pathFiles arquivos && git add . && git commit -m 'deploy develop' && git push origin develop"
+    "deploy-master": "git checkout master && git pull origin master && gulp build && node node_modules/xvtx deploy --pathFiles arquivos && git add . && git commit -m 'deploy from master' && git push origin master",
+    "deploy-develop": "git checkout develop && git pull origin develop && gulp build && node node_modules/xvtx deploy --pathFiles arquivos && git add . && git commit -m 'deploy from develop' && git push origin develop",
+    "deploy-homolog": "git checkout homolog && git pull origin homolog && gulp build && node node_modules/xvtx deploy --pathFiles arquivos && git add . && git commit -m 'deploy from homolog' && git push origin homolog"
   },
   "keywords": [
     "boilerplate",
@@ -40,7 +41,7 @@
     "gulp-uglify": "^3.0.2",
     "run-sequence": "^2.2.1",
     "vinyl-buffer": "^1.0.1",
-    "xvtx": "^1.0.1",
+    "xvtx": "^1.0.13",
     "vinyl-source-stream": "^2.0.0"
   },
   "browserify": {

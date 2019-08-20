@@ -48,10 +48,22 @@ var paths = {
   templates: {
     src: `${dirs.src}/templates/index.html`,
     dest: dirs.dest,
-  },
-  files: {
-    src: `${dirs.src}/arquivos/*`,
-    dest: `${dirs.dest}/arquivos`,
+
+    html: {
+      src: `${dirs.src}/templates/01 - HTML Templates/*.html`,
+      dest: `${dirs.dest}/html`
+    },
+
+    sub: {
+      src: `${dirs.src}/templates/01 - HTML Templates/Sub Templates/*.html`,
+      dest: `${dirs.dest}/html/sub`
+    },
+
+    shelves: {
+      src: `${dirs.src}/templates/02 - Shelves Templates/*.html`,
+      dest: `${dirs.dest}/shelf`
+    }
+
   },
   images: {
     src: `${dirs.src}/images/**/*.*`,
@@ -198,10 +210,21 @@ const templates = () => {
     .pipe(gulp.dest(paths.templates.dest))
 }
 
-const files = () => {
-  return gulp.src(paths.files.src)
-    .pipe(gulp.dest(paths.files.dest))
+const templatesHtml = () => {
+  return gulp.src(paths.templates.html.src)
+    .pipe(gulp.dest(paths.templates.html.dest))
 }
+
+const templatesSub = () => {
+  return gulp.src(paths.templates.sub.src)
+    .pipe(gulp.dest(paths.templates.sub.dest))
+}
+
+const templatesShelves = () => {
+  return gulp.src(paths.templates.shelves.src)
+    .pipe(gulp.dest(paths.templates.shelves.dest))
+}
+
 
 /**
  * Images handler
@@ -226,10 +249,12 @@ const watch = () => {
  */
 const build = (callback) => {
   runSequence(
-    'files',
     'styles',
     'scripts',
     'templates',
+    'templatesHtml',
+    'templatesSub',
+    'templatesShelves',
     'images',
     callback);
 }
@@ -262,7 +287,9 @@ gulp.task('browserSyncProxy', browserSyncProxy);
 gulp.task('styles', styles);
 gulp.task('scripts', scripts);
 gulp.task('templates', templates);
-gulp.task('files', files);
+gulp.task('templatesHtml', templatesHtml);
+gulp.task('templatesSub', templatesSub);
+gulp.task('templatesShelves', templatesShelves);
 gulp.task('images', images);
 gulp.task('build', build);
 gulp.task('watch', watch);

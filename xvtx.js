@@ -75,14 +75,12 @@ program
 	.option('--force', 'Force update all files and templates')
 	.action(cmd => {
 		if( cmd && cmd.pathFiles && cmd.pathFiles === 'arquivos' ) {
-			ACTIONS.uploadAssetsAction(cmd)
-					.then(ACTIONS.uploadDefaultAssetsAction)
+			ACTIONS.uploadDefaultAssetsAction(cmd)
 					.then(ACTIONS.uploadSubHTMLAction)
 					.then(ACTIONS.uploadHTMLAction)
 					.then(ACTIONS.uploadShelfAction);
 		} else {
-			ACTIONS.uploadAssetsAction(cmd)
-					.then(ACTIONS.uploadSubHTMLAction)
+			ACTIONS.uploadSubHTMLAction(cmd)
 					.then(ACTIONS.uploadHTMLAction)
 					.then(ACTIONS.uploadShelfAction);
 		}

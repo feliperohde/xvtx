@@ -96,14 +96,22 @@ $ xvtx assets
 ```
 
 ## Thanks
-This project is a simplified copy of https://github.com/gfpaiva/jussitb, so great thanks to Guilherme Paiva, really.
+This project is a simplified copy of [Guilherme Paiva project], so great thanks to Guilherme Paiva, really.
 
 
 ## Next steps
 *Template for es6 scripts components*
+
 *Template for new "mundinho" scripts*
+
 *Template for new "mundinho" styles*
+
 *CLI task to download assets files*
+
 *CLI task to delete assets files*
+
 *CLI task to delete template files*
+
+
+[Guilherme Paiva project]: https://github.com/gfpaiva/jussitb
 

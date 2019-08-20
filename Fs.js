@@ -28,7 +28,7 @@ class Fs {
 				SHELF: project => path.resolve(PROJECTDIR, project, 'src/templates/02 - Shelves Templates'),
 				pkg: project => path.resolve(PROJECTDIR, project, 'package.json'),
 				gulp: project => path.resolve(PROJECTDIR, project, 'gulpfile.js'),
-
+				config: project => path.resolve(PROJECTDIR, project, 'configs.json'),
 			},
 		};
 	};
@@ -73,13 +73,13 @@ class Fs {
 			this._copyPastePromise(this.templatePaths.project, projectPath)
 				.then(() => {
 					renameSync(
-						path.resolve(this.srcPaths.project.style(name), 'PROJECTACCOUNTNAME-style.scss'),
-						path.resolve(this.srcPaths.project.style(name), `${account}-style.scss`
+						path.resolve(this.srcPaths.project.style(name), 'PROJECTACCOUNTNAME_style.scss'),
+						path.resolve(this.srcPaths.project.style(name), `${account}_style.scss`
 					));
 
 					renameSync(
-						path.resolve(this.srcPaths.project.script(name), 'PROJECTACCOUNTNAME-app.js'),
-						path.resolve(this.srcPaths.project.script(name), `${account}-app.js`
+						path.resolve(this.srcPaths.project.script(name), 'PROJECTACCOUNTNAME_script.js'),
+						path.resolve(this.srcPaths.project.script(name), `${account}_app.js`
 					));
 
 					return;
