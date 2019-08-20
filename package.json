@@ -1,6 +1,6 @@
 {
   "name": "xvtx",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "CLI VTEX utils",
   "main": "xvtx.js",
   "bin": {
