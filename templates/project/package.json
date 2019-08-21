@@ -41,7 +41,7 @@
     "gulp-uglify": "^3.0.2",
     "run-sequence": "^2.2.1",
     "vinyl-buffer": "^1.0.1",
-    "xvtx": "^1.0.14",
+    "xvtx": "^1.0.15",
     "vinyl-source-stream": "^2.0.0"
   },
   "browserify": {

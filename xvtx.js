@@ -66,6 +66,12 @@ program
 	.action(ACTIONS.uploadDefaultAssetsAction);
 
 program
+	.command('syncTemplates')
+	.option('--account <account>', 'Set the VTEX project/account name')
+	.description('Sync template sctructure with VTEX CMS')
+	.action(ACTIONS.syncTemplates);
+
+program
 	.command('deploy')
 	.description('Auth user and deploy all files (CSS, JS, HTML Templates and HTML SubTemplates) on VTEX')
 	.option('--account <account>', 'Set the VTEX account name')

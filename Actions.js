@@ -35,6 +35,7 @@ class Actions {
 		this.uploadSubHTMLAction = this.uploadSubHTMLAction.bind(this);
 		this.uploadShelfAction = this.uploadShelfAction.bind(this);
 		this.createProject = this.createProject.bind(this);
+		this.syncTemplates = this.syncTemplates.bind(this);
 	};
 
 	_checkPath() {
@@ -60,6 +61,46 @@ class Actions {
 		return [
 			{ type: 'input', name: 'name', message: `Enter the name of the ${type}` }
 		];
+	}
+
+	_createSyncQuestions(type) {
+		return [
+			{ type: 'confirm', name: 'sync', message: 'Want to sync the platform templates?' }
+		];
+	}
+
+	syncTemplates( { account = null } ) {
+
+		const questions = this._createSyncQuestions('project');
+		let totalCmd = {};
+
+		return prompt(questions)
+
+				.then((res) => totalCmd = res)
+				.then(() => {
+					let newQuestions = [];
+
+					if(!account) {
+						newQuestions.push({ type: 'input', name: 'account', message: 'Enter the VTEX account' });
+					} else {
+						totalCmd.account = account;
+					}
+
+					return prompt(newQuestions)
+				})
+				.then(res => {
+					totalCmd = {
+						...totalCmd,
+						...res
+					}
+
+					return totalCmd;
+				})
+				.then(() => {
+					if(totalCmd.sync) return this.createHTMLLocalFiles(totalCmd, true);
+					return true;
+				})
+				.catch(err => message('error', `Error on syncing templates: ${err}`));
 	}
 
 	createProject( { account = null } ) {
@@ -106,7 +147,7 @@ class Actions {
 				.catch(err => message('error', `Error on create project: ${err}`));
 	}
 
-	createHTMLLocalFiles(cmd) {
+	createHTMLLocalFiles(cmd, isSync = false) {
 
 		this._actionTitle('SYNC: creating files');
 
@@ -119,19 +160,19 @@ class Actions {
 
 				return VTEXCMS.getHTMLTemplates()
 						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'HTML', cmd.name)))
+						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'HTML', isSync ? '' : cmd.name)))
 						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
 						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
 
 						.then(() => VTEXCMS.getHTMLTemplates(true))
 						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SUB' , cmd.name)))
+						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SUB' , isSync ? '' : cmd.name)))
 						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
 						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
 
 						.then(() => VTEXCMS.getHTMLTemplates(false, true))
 						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SHELF' , cmd.name)))
+						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SHELF' , isSync ? '' : cmd.name)))
 						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates, true))
 						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
 
