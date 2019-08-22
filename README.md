@@ -1,6 +1,6 @@
 # xvtx
 A simple vtex cli for basic things.
-Hurry up don't waste your time, Do these commands in your terminal:
+Hurry up don't waste your time, do these commands in your terminal:
 
 
 ## Installation
