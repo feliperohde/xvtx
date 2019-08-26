@@ -1,4 +1,9 @@
 # xvtx
+
+![npm](https://img.shields.io/npm/dt/xvtx.svg)
+
+[![NPM](https://nodei.co/npm/xvtx.png)](https://nodei.co/npm/xvtx/)
+
 A simple vtex cli for basic things.
 Hurry up don't waste your time, do these commands in your terminal:
 
