@@ -1,6 +1,6 @@
 # xvtx
 A simple vtex cli for basic things.
-Hurry up don't waste your time, Do these commands in your terminal:
+Hurry up don't waste your time, do these commands in your terminal:
 
 
 ## Installation
@@ -34,15 +34,22 @@ The process will generate a xvtx.auth.json file in root path of your project.
 This file is used to cache your auth login cookie, we recomend to ignore this file in .gitignore.
 
 
-## Extra
-
-Other utils commands:
+## Commands
 
 *Help*
 
 ```bash
 
 $ xvtx -h
+
+```
+___
+
+*Download all templates*
+
+```bash
+
+$ xvtx syncTemplates
 
 ```
 ___

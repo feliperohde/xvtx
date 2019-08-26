@@ -19,7 +19,11 @@ const gulpif       = require('gulp-if');
 const uglify       = require('gulp-uglify');
 const glob         = require("glob");
 const path         = require('path');
+const cheerio      = require('cheerio');
+const Entities     = require('html-entities').XmlEntities;
+const through      = require('through2');
 
+const entities = new Entities();
 const env  = process.argv.slice(2)[0];
 var config = JSON.parse(fs.readFileSync('configs.json'))
 
@@ -212,16 +216,114 @@ const templates = () => {
 
 const templatesHtml = () => {
   return gulp.src(paths.templates.html.src)
+    .pipe(through.obj( function (chunk, enc, cb) {
+
+            fs.readFile(path.resolve(chunk.path), 'utf8', async (err, template) => {
+
+              const $ = cheerio.load(template, {xmlMode: true});
+
+              const templateLinks = $("a");
+
+              let adjustedUrls = [];
+
+              await templateLinks.each(function(i, elem) {
+
+                let currURL = $(this).attr('href');
+
+                if(adjustedUrls.includes(currURL) || currURL == undefined) return;
+
+                if(currURL != "" && currURL != "#" && currURL.indexOf("javascript:") == -1 ) {
+
+                  $(this).find(`a[href="${currURL}"]`).attr('href', entities.encode(currURL));
+
+                  adjustedUrls.push(currURL);
+                }
+
+
+              });
+
+              chunk.contents = Buffer.from($.html().toString());
+
+              cb(null, chunk);
+
+          });
+
+    }))
     .pipe(gulp.dest(paths.templates.html.dest))
 }
 
 const templatesSub = () => {
   return gulp.src(paths.templates.sub.src)
+  .pipe(through.obj( function (chunk, enc, cb) {
+
+            fs.readFile(path.resolve(chunk.path), 'utf8', async (err, template) => {
+
+              const $ = cheerio.load(template, {xmlMode: true});
+
+              const templateLinks = $("a");
+
+              let adjustedUrls = [];
+
+              await templateLinks.each(function(i, elem) {
+
+                let currURL = $(this).attr('href');
+
+                if(adjustedUrls.includes(currURL) || currURL == undefined) return;
+
+                if(currURL != "" && currURL != "#" && currURL.indexOf("javascript:") == -1 ) {
+
+                  $(this).find(`a[href="${currURL}"]`).attr('href', entities.encode(currURL));
+
+                  adjustedUrls.push(currURL);
+                }
+
+
+              });
+
+              chunk.contents = Buffer.from($.html().toString());
+
+              cb(null, chunk);
+
+          });
+
+    }))
     .pipe(gulp.dest(paths.templates.sub.dest))
 }
 
 const templatesShelves = () => {
   return gulp.src(paths.templates.shelves.src)
+  .pipe(through.obj( function (chunk, enc, cb) {
+
+            fs.readFile(path.resolve(chunk.path), 'utf8', async (err, template) => {
+
+              const $ = cheerio.load(template, {xmlMode: true});
+
+              const templateLinks = $("a");
+
+              let adjustedUrls = [];
+
+              await templateLinks.each(function(i, elem) {
+
+                let currURL = $(this).attr('href');
+
+                if(adjustedUrls.includes(currURL) || currURL == undefined) return;
+
+                if(currURL != "" && currURL != "#" && currURL.indexOf("javascript:") == -1 ) {
+
+                  $(this).find(`a[href="${currURL}"]`).attr('href', entities.encode(currURL));
+
+                  adjustedUrls.push(currURL);
+                }
+
+              });
+
+              chunk.contents = Buffer.from($.html().toString());
+
+              cb(null, chunk);
+
+          });
+
+    }))
     .pipe(gulp.dest(paths.templates.shelves.dest))
 }
 

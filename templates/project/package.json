@@ -28,6 +28,7 @@
     "babelify": "^10.0.0",
     "browser-sync": "^2.26.3",
     "browserify": "^16.2.3",
+    "cheerio": "^1.0.0-rc.3",
     "glob": "^7.1.4",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^6.0.0",
@@ -39,10 +40,12 @@
     "gulp-sass-glob": "^1.1.0",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-uglify": "^3.0.2",
+    "html-entities": "^1.2.1",
     "run-sequence": "^2.2.1",
+    "through2": "^3.0.1",
     "vinyl-buffer": "^1.0.1",
-    "xvtx": "^1.0.15",
-    "vinyl-source-stream": "^2.0.0"
+    "vinyl-source-stream": "^2.0.0",
+    "xvtx": "^1.0.16"
   },
   "browserify": {
     "transform": [

@@ -274,7 +274,7 @@ class VtexCMS {
 
 		const $ = cheerio.load(templateList);
 
-		return files.splice(0.20).map(file => {
+		return files.map(file => {
 			return new Promise(resolve => {
 
 				const fileName = this._pathToFileName(file);
@@ -341,11 +341,11 @@ class VtexCMS {
 			}
 
 			return curr !== undefined && requests.length
-			? await resolveChunks(requests.splice(0, 2), results)
+			? await resolveChunks(requests.splice(0, 10), results)
 			: [].concat.apply([], results)
 		}
 
-		return await resolveChunks(requests.splice(0, 2), results)
+		return await resolveChunks(requests.splice(0, 10), results)
 			.then(data => {
 
 				return [].concat.apply([], allPromises)
@@ -437,6 +437,7 @@ class VtexCMS {
 		const genPromises = templateName => {
 			return new Promise((resolve, reject ) => {
 				readFile(path.resolve(filesDir, templateName), 'utf8', (err, template) => {
+
 					if(err) {
 						message('error', err);
 						reject(err);
@@ -537,7 +538,13 @@ class VtexCMS {
 	 */
 	_getTemplateId($, templateName) {
 
-		const currTemplate = $(`.template div:contains("${templateName}")`).next('a').attr('href');
+		const listMatch = $(`.template div:contains("${templateName}")`);
+
+		var match = listMatch.filter(function() {
+			return $(this).text() === `${templateName}`;
+		});
+
+		const currTemplate = match.next('a').attr('href');
 
 		try {
 			currTemplate.match(/(templateId=)(.+)$/)[2];
