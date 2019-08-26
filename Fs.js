@@ -105,8 +105,6 @@ class Fs {
 
 	fillProjectHTML(contents) {
 
-		// console.log(contents);
-
 		return contents.map(content => {
 
 			return content.then(data => this._writeFilePromise(data.file, data.html))
