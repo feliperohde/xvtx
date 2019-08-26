@@ -1,38 +1,29 @@
 {
-  "_from": "xvtx",
-  "_id": "xvtx@1.0.16",
-  "_inBundle": false,
-  "_integrity": "sha512-ERFuW0hm8D17++pnZDHg49svip3nVNhhEjqFEx8bpPewUwuJEwE/OlCs9zJuGDIyXQhS/45TpJJKqx+HDevAmA==",
-  "_location": "/xvtx",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "tag",
-    "registry": true,
-    "raw": "xvtx",
-    "name": "xvtx",
-    "escapedName": "xvtx",
-    "rawSpec": "",
-    "saveSpec": null,
-    "fetchSpec": "latest"
-  },
-  "_requiredBy": [
-    "#USER"
-  ],
-  "_resolved": "https://registry.npmjs.org/xvtx/-/xvtx-1.0.15.tgz",
-  "_shasum": "686eb2ed8fb365692c631a6ee28a818f22bd7f30",
-  "_spec": "xvtx",
-  "_where": "/Users/feliperohde/projects/itelios/itelios.RiHappy.VTEX/node_modules/xvtx",
-  "author": {
-    "name": "Felipe Rohde",
-    "email": "fr.rohde@gmail.com"
-  },
+  "name": "xvtx",
+  "version": "1.0.17",
+  "description": "CLI VTEX utils",
+  "main": "xvtx.js",
   "bin": {
     "xvtx": "xvtx.js"
+  },
+  "author": "Felipe Rohde <fr.rohde@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/feliperohde/xvtx.git"
   },
   "bugs": {
     "url": "https://github.com/feliperohde/xvtx/issues"
   },
-  "bundleDependencies": false,
+  "homepage": "https://github.com/feliperohde/xvtx/blob/master/README.md",
+  "keywords": [
+    "xvtx",
+    "VTEX",
+    "kit front-end",
+    "cli",
+    "deploy"
+  ],
+  "license": "MIT",
+  "preferGlobal": true,
   "dependencies": {
     "axios": "^0.19.0",
     "cheerio": "^1.0.0-rc.2",
@@ -49,26 +40,7 @@
     "qs": "^6.7.0",
     "update-notifier": "^3.0.0"
   },
-  "deprecated": false,
-  "description": "CLI VTEX utils",
-  "homepage": "https://github.com/feliperohde/xvtx/blob/master/README.md",
-  "keywords": [
-    "xvtx",
-    "VTEX",
-    "kit front-end",
-    "cli",
-    "deploy"
-  ],
-  "license": "MIT",
-  "main": "xvtx.js",
-  "name": "xvtx",
-  "preferGlobal": true,
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/feliperohde/xvtx.git"
-  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "version": "1.0.15"
+  }
 }
