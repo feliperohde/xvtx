@@ -63,7 +63,6 @@ class VtexCMS {
 			subTemplatesPath: path.resolve(PROJECTDIR, 'build/html/sub'),
 		};
 
-		this.promisesChunk = [];
 	};
 
 	/**
@@ -131,15 +130,30 @@ class VtexCMS {
 		return uploadPromises;
 	};
 
+
 	/**
 	 * Save CSS and JS files on "CMS (/arquivos)" on VTEX
 	 * @param  {String} requestToken
 	 * @param  { { force: Boolean, account: String } } cmd object with cmd commander params/options
 	 * @returns {Array} Array of promises
 	 */
-	defaultAssets(requestToken, { force, account }) {
+	defaultAssets(requestToken, { force, account, file }) {
 
-		const files = readdirSync(this.localPaths.defaultAssetsPath).filter(file => /\.(css|js)$/gmi.test(file));
+		let filesFilter = file.split(",") || false;
+
+		console.log(filesFilter);
+
+		let files = readdirSync(this.localPaths.defaultAssetsPath)
+			.filter(file => {
+
+				return /\.(css|js|png|jpg|gif)$/gmi.test(file);
+
+			});
+
+		if(filesFilter) {
+			files = filesFilter;
+		}
+
 		const bar = this.defaultBar(files.length);
 		const lock = this._checklockFile();
 
@@ -235,6 +249,17 @@ class VtexCMS {
 					message('error', `Get HTML templates error: ${err}`);
 					throw new Error(err);
 				});
+	};
+
+	matchTemplateName(match, templateList) {
+
+		if(templateList.includes(match)) {
+			return [match];
+		} else {
+			message('error', `Template ${match} does not exist in the VTEX plataform`);
+			return templateList;
+		}
+
 	};
 
 	/**
@@ -341,11 +366,11 @@ class VtexCMS {
 			}
 
 			return curr !== undefined && requests.length
-			? await resolveChunks(requests.splice(0, 10), results)
+			? await resolveChunks(requests.splice(0, 2), results)
 			: [].concat.apply([], results)
 		}
 
-		return await resolveChunks(requests.splice(0, 10), results)
+		return await resolveChunks(requests.splice(0, 2), results)
 			.then(data => {
 
 				return [].concat.apply([], allPromises)

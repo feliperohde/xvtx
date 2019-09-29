@@ -1,6 +1,6 @@
 'use strict';
 
-const { readFile, writeFile, existsSync, mkdirSync, readFileSync, renameSync } = require('fs');
+const { readFile, writeFile, existsSync, mkdirSync, readFileSync, renameSync, readdirSync } = require('fs');
 const path = require('path');
 const ncp = require('ncp').ncp;
 
@@ -32,6 +32,22 @@ class Fs {
 			},
 		};
 	};
+
+
+	/**
+	 * @returns {Array} Array list of files that can be uploaded to a VTEX
+	 */
+	getArchiveList() {
+
+		const files = readdirSync(path.resolve(PROJECTDIR, 'build/arquivos'))
+			.filter(file => {
+
+				return /\.(css|js|png|jpg|gif)$/gmi.test(file);
+
+			});
+
+		return files;
+	}
 
 	createJsFile ( { name, overview }, type ) {
 
@@ -99,6 +115,8 @@ class Fs {
 	}
 
 	createProjectHTML(templateList, templateType, projectFolderName) {
+
+		console.log("FS.createProjectHTML:", templateList);
 
 		return templateList.map(template => this._writeFilePromise(path.resolve(this.srcPaths.project[templateType](projectFolderName), `${template}.html`), ''));
 	}

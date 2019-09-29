@@ -34,6 +34,7 @@ program
 	.description('Auth user and Deploy HTML Templates files on VTEX CMS')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
+	.option('--template <template>', 'Set the template you want to get')
 	.action(ACTIONS.uploadHTMLAction);
 
 program
@@ -41,6 +42,7 @@ program
 	.description('Auth user and Deploy HTML Sub Templates files on VTEX CMS')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
+	.option('--template <template>', 'Set the template you want to get')
 	.action(ACTIONS.uploadSubHTMLAction);
 
 program
@@ -48,6 +50,7 @@ program
 	.description('Auth user and Deploy HTML Shelves files on VTEX CMS')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
+	.option('--template <template>', 'Set the template you want to get')
 	.action(ACTIONS.uploadShelfAction);
 
 program
@@ -63,13 +66,28 @@ program
 	.description('Auth user and Deploy CSS and JS files on VTEX CMS')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
+	.option('--file <file>', 'Set the file you want to upload, ex: --file file1.js,file2.css,file3.js')
 	.action(ACTIONS.uploadDefaultAssetsAction);
 
 program
+	.command('listAssets')
+	.description('Shows a list of files that can be uploaded')
+	.action(ACTIONS.getArchiveList);
+
+program
 	.command('syncTemplates')
-	.option('--account <account>', 'Set the VTEX project/account name')
+	.option('--account <account>', 'Set the VTEX account name')
+	.option('--email <email>', 'Set the email account')
+	.option('--template <template>', 'set template name you want to get')
 	.description('Sync template sctructure with VTEX CMS')
 	.action(ACTIONS.syncTemplates);
+
+program
+	.command('getTemplate')
+	.option('--account <account>', 'Set the VTEX account name')
+	.option('--email <email>', 'Set the email account')
+	.description('Get unique template by name')
+	.action(ACTIONS.getTemplate);
 
 program
 	.command('deploy')
