@@ -83,7 +83,7 @@ $ xvtx html --template template1.html --create true
 ```
 ___
 *Deploy SubTemplate Files*
-*When creating it, a generic class "robotCreatedThisTemplate" are added*
+* | When creating it, a generic class "robotCreatedThisTemplate" are added*
 
 ```bash
 
