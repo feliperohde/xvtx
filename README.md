@@ -45,7 +45,7 @@ $ xvtx -h
 ```
 ___
 
-*Download all templates*
+*Download all templates from vtex platform*
 
 ```bash
 
@@ -76,13 +76,22 @@ ___
 
 $ xvtx html
 
+$ xvtx html --template template1.html
+
+$ xvtx html --template template1.html --create true
+
 ```
 ___
 *Deploy SubTemplate Files*
+*When creating it, a generic class "robotCreatedThisTemplate" are added*
 
 ```bash
 
 $ xvtx sub
+
+$ xvtx sub --template template1.html
+
+$ xvtx sub --template template1.html --create true
 
 ```
 ___
@@ -104,11 +113,12 @@ $ xvtx assets
 
 ## Change log
 
-### 1.0.20 see more by using "xvtx -h"
+### 1.0.21 see more by using "xvtx -h"
 - Added individual file upload by using "--file" argument
 - Added list file upload by using "--file file1.js,file2.css" argument
 - Added individual file upload by using "--template" argument
-- Added template crateing parameter by using "--create true" argument
+- Added template creation parameter by using "--create true" argument
+
 
 
 ## Thanks

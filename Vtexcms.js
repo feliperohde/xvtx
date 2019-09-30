@@ -1,485 +1,734 @@
 'use strict';
 
-const { prompt } = require('inquirer');
-const { readFileSync, readdirSync } = require('fs');
+const { readFile, readdirSync, createReadStream } = require('fs');
 const path = require('path');
+const axios = require('axios');
+const cheerio = require('cheerio');
+const qs = require('qs');
+const ProgressBar = require('progress');
+const md5 = require('md5');
 const jsonfile = require('jsonfile');
-const Spinner = require('cli-spinner').Spinner;
-const exec = require('child_process').exec;
-
 const message = require('./utils/cli-colors');
-const VtexId = require('./Vtexid');
-const VtexCMS = require('./Vtexcms');
-const Fs = require('./Fs');
+const FormData = require('form-data');
+const decode = require('decode-html');
 
 const PROJECTDIR = process.cwd();
-const VTEXID = new VtexId();
-const FS = new Fs();
-let VTEXCMS = null;
 
-let fileOverview = [ { type: 'input', name: 'overview', message: 'Description of the file' } ];
-
-class Actions {
-	constructor() {
-		this.account = null;
-		this.email = null;
-		this.localPaths = {
-			lockPath: path.resolve(PROJECTDIR, 'xvtx.lock.json'),
+class VtexCMS {
+	constructor(account = null, authCookie, site) {
+		this.account = account;
+		this.authCookie = authCookie;
+		this.uri = `https://${this.account}.vtexcommercestable.com.br`;
+		this.baseUri = `${this.account}.vtexcommercestable.com.br`;
+		this.endpoints = {
+			setAsset: `/api/portal/pvt/sites/${site}/files`,
+			setDefaultAsset: `/admin/a/FilePicker/UploadFile`,
+			setHTMLTemplate: `/admin/a/PortalManagement/SaveTemplate`,
+			setShelfTemplate: `/admin/a/PortalManagement/SaveShelfTemplate`,
+			getHTMLTemplates: `/admin/a/PortalManagement/GetTemplateList`,
+			getHTMLTemplate: `/admin/a/PortalManagement/TemplateContent?templateId=`,
+			getShelfTemplates: `/admin/a/PortalManagement/ShelfTemplateContent`,
+			getShelfTemplate: `/admin/a/PortalManagement/ShelfTemplateContent?shelfTemplateId=`,
+			getRequestToken: `/admin/a/PortalManagement/AddFile?fileType=css`
+		};
+		this.authCookie =  {
+			name: 'VtexIdclientAutCookie',
+			value: authCookie
 		};
 
-		// \/ Just to maintain the scope
-		this.authAction = this.authAction.bind(this);
-		this.uploadAssetsAction = this.uploadAssetsAction.bind(this);
-		this.uploadDefaultAssetsAction = this.uploadDefaultAssetsAction.bind(this);
-		this.uploadHTMLAction = this.uploadHTMLAction.bind(this);
-		this.uploadSubHTMLAction = this.uploadSubHTMLAction.bind(this);
-		this.uploadShelfAction = this.uploadShelfAction.bind(this);
-		this.createProject = this.createProject.bind(this);
-		this.syncTemplates = this.syncTemplates.bind(this);
-		this.getTemplate = this.getTemplate.bind(this);
-		this.getArchiveList = this.getArchiveList.bind(this);
-	};
-
-	_checkPath() {
-
-		const isRoot = readFileSync(path.resolve(PROJECTDIR, 'package.json'));
-
-		try {
-			readdirSync(path.resolve(PROJECTDIR, 'build'));
-		} catch(err) {
-			message('error', 'Plese run in root of the project after build all files');
-
-			throw new Error(err);
-		}
-
-		if(!isRoot) {
-			message('error', 'Plese run in root of the project after build all files');
-
-			throw new Error(err);
-		}
-	}
-
-	_createFileQuestions(type) {
-		return [
-			{ type: 'input', name: 'name', message: `Enter the name of the ${type}` }
-		];
-	}
-
-	_createSyncQuestions() {
-		return [
-			{ type: 'confirm', name: 'sync', message: 'Want to sync the platform templates?' }
-		];
-	}
-
-	_createGetTemplateQuestions() {
-		return [
-			{ type: 'input', name: 'templateName', message: 'What template you want?' }
-		];
-	}
-
-	getTemplate( { account = null, email = null, template = null } ) {
-
-		const questions = this._createGetTemplateQuestions();
-		let totalCmd = {};
-
-		return prompt(questions)
-
-				.then((res) => totalCmd = res)
-				.then(() => {
-					let newQuestions = [];
-
-					if(!account) {
-						newQuestions.push({ type: 'input', name: 'account', message: 'Enter the VTEX account' });
-					} else {
-						totalCmd.account = account;
-					}
-
-					return prompt(newQuestions)
-				})
-				.then(res => {
-					totalCmd = {
-						...totalCmd,
-						...res
-					}
-
-					return totalCmd;
-				})
-				.then(() => {
-					return this.createHTMLLocalFile(totalCmd, true);
-					return true;
-				})
-				.catch(err => message('error', `Error on syncing template: ${err}`));
-	}
-
-	syncTemplates( { account = null, email = null, template = null, html = null , sub = null, shelf = null } ) {
-
-		const questions = this._createSyncQuestions();
-		let totalCmd = {};
-
-		return prompt(questions)
-
-				.then((res) => totalCmd = res)
-				.then(() => {
-					let newQuestions = [];
-
-					if(!account) {
-						newQuestions.push({ type: 'input', name: 'account', message: 'Enter the VTEX account' });
-					} else {
-						totalCmd.account = account;
-					}
-
-					if(!email) {
-						newQuestions.push({ type: 'input', name: 'email', message: 'Enter the VTEX email' });
-					} else {
-						totalCmd.email = email;
-					}
-
-					if(!template) {
-						newQuestions.push({ type: 'input', name: 'template', message: 'Enter the template name you want to sync or just enter' });
-					} else {
-						totalCmd.template = template;
-					}
-
-					if(!html) {
-						newQuestions.push({ type: 'confirm', name: 'html', message: 'Want to sync html root templates?' });
-					} else {
-						totalCmd.html = html;
-					}
-
-					if(!sub) {
-						newQuestions.push({ type: 'confirm', name: 'sub', message: 'Want to sync html sub templates?' });
-					} else {
-						totalCmd.sub = sub;
-					}
-
-					if(!shelf) {
-						newQuestions.push({ type: 'confirm', name: 'shelf', message: 'Want to sync html shelf templates?' });
-					} else {
-						totalCmd.shelf = shelf;
-					}
-
-					return prompt(newQuestions)
-				})
-				.then(res => {
-					totalCmd = {
-						...totalCmd,
-						...res
-					}
-
-					return totalCmd;
-				})
-				.then(() => {
-					if(totalCmd.sync) return this.createHTMLLocalFiles(totalCmd, true);
-					return true;
-				})
-				.catch(err => message('error', `Error on syncing templates: ${err}`));
-	}
-
-	createProject( { account = null } ) {
-
-		const questions = this._createFileQuestions('project');
-		let totalCmd = {};
-
-		return prompt(questions)
-				.then((res) => FS.checkCreate(res, 'project'))
-				.then((res) => totalCmd = res)
-				.then(() => {
-					let newQuestions = [];
-
-					if(!account) {
-						newQuestions.push({ type: 'input', name: 'account', message: 'Enter the VTEX account' });
-					} else {
-						totalCmd.account = account;
-					}
-
-					newQuestions.push({ type: 'confirm', name: 'sync', message: 'Want to sync the platform templates?' })
-
-					return prompt(newQuestions)
-				})
-				.then(res => {
-					totalCmd = {
-						...totalCmd,
-						...res
-					}
-
-					return totalCmd;
-				})
-				.then(cmd => FS.createProject(cmd))
-				.then(project => message('success', `${project} has been created`))
-				.then(() => {
-					if(totalCmd.sync) return this.createHTMLLocalFiles(totalCmd);
-					return true;
-				})
-				.then(() => {
-					this._actionTitle('Installing Dependencies');
-					const child = exec(`cd ${totalCmd.name} && npm install`).stderr.pipe(process.stderr);
-
-					return true;
-				})
-				.catch(err => message('error', `Error on create project: ${err}`));
-	}
-
-	createHTMLLocalFile(cmd, isSync = false) {
-
-		this._actionTitle('SYNC: creating files');
-
-		return this.authAction(cmd, false, false)
-			.then(authCookie => {
-
-				const spinner = new Spinner('Processing..');
-				spinner.setSpinnerString('|/-\\');
-				spinner.start();
-
-						// this._actionTitle('Searching in main templates...')
-				return
-						VTEXCMS.getHTMLTemplates()
-						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateNames => VTEXCMS.matchTemplateName(cmdName,templateNames))
-						.then(templateName => Promise.all(FS.createProjectHTML(templateName, 'HTML', isSync ? '' : cmd.name)))
-						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
-						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
-
-						.then(() => {
-							this._actionTitle('Searching in sub templates...');
-
-							return VTEXCMS.getHTMLTemplates(true)
-						})
-						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateNames => VTEXCMS.matchTemplateName(cmdName,templateNames))
-						.then(templateName => Promise.all(FS.createProjectHTML(templateName, 'SUB' , isSync ? '' : cmd.name)))
-						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
-						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
-
-						.then(() => {
-							this._actionTitle('Searching in shelfs...');
-
-							return VTEXCMS.getHTMLTemplates(false, true);
-						})
-						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateNames => VTEXCMS.matchTemplateName(cmdName,templateNames))
-						.then(templateName => Promise.all(FS.createProjectHTML(templateName, 'SHELF' , isSync ? '' : cmd.name)))
-						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates, true))
-						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
-
-						.then(() => {
-							spinner.stop(true);
-							message('success', 'HTML Templates has been created');
-						});
-			});
-	}
-
-	createHTMLLocalFiles(cmd, isSync = false) {
-
-		this._actionTitle('SYNC: creating files');
-
-		return this.authAction(cmd, false, false)
-			.then(authCookie => {
-
-				const spinner = new Spinner('Processing..');
-				spinner.setSpinnerString('|/-\\');
-				spinner.start();
-
-				return VTEXCMS.getHTMLTemplates()
-						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateList => {console.log(templateList); return templateList;})
-						.then(templateNames => VTEXCMS.matchTemplateName(cmd,templateNames))
-						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'HTML', isSync ? '' : cmd.name)))
-						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
-						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
-
-						.then(() => VTEXCMS.getHTMLTemplates(true))
-						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateList => {console.log(templateList); return templateList;})
-						.then(templateNames => VTEXCMS.matchTemplateName(cmd,templateNames))
-						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SUB' , isSync ? '' : cmd.name)))
-						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
-						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
-
-						.then(() => VTEXCMS.getHTMLTemplates(false, true))
-						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateList => {console.log(templateList); return templateList;})
-						.then(templateNames => VTEXCMS.matchTemplateName(cmd,templateNames))
-						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SHELF' , isSync ? '' : cmd.name)))
-						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates, true))
-						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
-
-						.then(() => {
-							spinner.stop(true);
-							message('success', 'HTML Templates has been created');
-						});
-			});
-	}
-
-	authAction( { email = null, account = null, site = 'default' }, checkPath = true, writeAuthStore = true ) {
-
-		if(checkPath) this._checkPath();
-
-		if(VTEXID.authCookie) return Promise.resolve(VTEXID.authCookie);
-
-		const questions = [];
-
-		if(!account) {
-			questions.push({ type: 'input', name: 'account', message: 'Enter the VTEX account' });
-		} else {
-			this.account = account;
-		}
-
-		if(!email) {
-			questions.push({ type: 'input', name: 'email', message: 'Enter your e-mail' })
-		} else {
-			this.email = email;
-		}
-
-		return prompt(questions)
-				.then(( { account, email } ) => {
-					if(!this.account) this.account = account;
-					if(!this.email) this.email = email;
-
-					VTEXID.setAccount(this.account);
-
-					const authStore = VTEXID.checkAuthStore(this.account, this.email, writeAuthStore);
-
-					if(authStore) {
-						VTEXID.setAuthCookie(authStore);
-						return authStore;
-					}
-
-					return VTEXID.getEmailAccessKey(this.email)
-							.then(() => prompt({ type: 'input', name: 'accesskey', message: 'Enter the VTEX Access Key (with 6 digits)' }))
-							.then(( { accesskey } ) => VTEXID.authenticateByEmailKey(this.email, accesskey))
-							.then(authCookie => {
-								if(writeAuthStore) VTEXID.writeAuthStore(this.account, this.email, authCookie);
-								return authCookie;
-							});
-				})
-				.then(authCookie => {
-					VTEXCMS = new VtexCMS(this.account, authCookie, site);
-					return authCookie;
-				});
-	};
-
-	uploadAssetsAction(cmd) {
-
-		return this.authAction(cmd)
-			.then(authCookie => {
-
-				this._actionTitle(`Uploading Files (/files)`);
-
-				return Promise.all(VTEXCMS.setAssetFile(cmd))
-				.then(responses => {
-					// responses.map(file => message('success', `Uploaded File ${file}`));
-					this._successUpload(responses, 'Asset');
-					return cmd;
-				});
-			});
-	};
-
-	uploadDefaultAssetsAction(cmd) {
-
-		return this.authAction(cmd)
-			.then(authCookie => {
-
-				this._actionTitle(`Uploading Files (/arquivos)`);
-
-				return VTEXCMS.getRequestToken()
-					.then(requestToken => Promise.all(VTEXCMS.defaultAssets(requestToken, cmd)))
-					.then(responses => {
-						// responses.map(file => message('success', `Uploaded File ${file}`));
-						this._successUpload(responses, 'Asset');
-						return cmd;
-					});
-			});
-	};
-
-	getArchiveList() {
-
-		let list = FS.getArchiveList();
-
-		list.map(file => message("success", `${file}`));
-
-		return this;
-	};
-
-	uploadHTMLAction(cmd) {
-
-		return this.authAction(cmd)
-			.then(authCookie => {
-
-				this._actionTitle(`Uploading Templates HTML`);
-
-				return VTEXCMS.getHTMLTemplates()
-						.then(templateList => VTEXCMS.matchTemplateNameUpload(cmd,templateList))
-						.then(templateList => Promise.all(VTEXCMS.setHTML(templateList, false, false, cmd)))
-						.then(responses => {
-							this._successUpload(responses);
-							return cmd;
-						});
-			});
-	};
-
-	uploadSubHTMLAction(cmd) {
-
-		return this.authAction(cmd)
-			.then(authCookie => {
-
-				this._actionTitle(`Uploading SubTemplates HTML`);
-
-				return VTEXCMS.getHTMLTemplates(true)
-						.then(templateList => VTEXCMS.matchTemplateNameUpload(cmd,templateList))
-						.then(templateList => Promise.all(VTEXCMS.setHTML(templateList, true, false, cmd)))
-						.then(responses => {
-							this._successUpload(responses);
-							return cmd;
-						});
-			});
-	};
-
-	uploadShelfAction(cmd) {
-
-		return this.authAction(cmd)
-			.then(authCookie => {
-
-				this._actionTitle(`Uploading Shelves HTML`);
-
-				return VTEXCMS.getHTMLTemplates(true, true)
-						.then(templateList => VTEXCMS.matchTemplateNameUpload(cmd,templateList))
-						.then(templateList => Promise.all(VTEXCMS.setHTML(templateList, false, true, cmd)))
-						.then(responses => {
-							this._successUpload(responses);
-							return cmd;
-						});
-			});
-	};
-
-	_successUpload(responses, typeFile = 'Template') {
-
-		responses.map(( { type, templateName, content, account } ) => {
-			message(type, `${type === 'success' ? 'Uploaded' : 'Hold' } ${typeFile} ${templateName}`);
-
-			if(!content) return;
-
-			const lock = jsonfile.readFileSync(this.localPaths.lockPath, { throws: false });
-			const newLock = {
-				...lock,
-				[account]: {
-					...lock[account],
-					[templateName]: {
-						content,
-						lastUpdate: new Date()
-					}
-				}
+		let headers = {
+				Cookie: `${this.authCookie.name}=${this.authCookie.value};`,
+				Accept: '*/*',
+				'Cache-Control': 'no-cache',
 			};
 
-			jsonfile.writeFileSync(this.localPaths.lockPath, newLock, {spaces: 4});
+		this.AXIOS = axios.create({
+			baseURL: this.uri,
+			headers: headers,
+			timeout: (1000 * 60 * 60)
 		});
+		this.templates = null;
+		this.defaultBar = total => new ProgressBar('uploading [:bar] :percent - :current/:total', {
+			total,
+			complete: '#',
+			incomplete: '-',
+			width: 20,
+		});
+		this.localPaths = {
+			lockPath: path.resolve(PROJECTDIR, 'xvtx.lock.json'),
+			assetsPath: path.resolve(PROJECTDIR, 'build/files'),
+			defaultAssetsPath: path.resolve(PROJECTDIR, 'build/arquivos'),
+			shelvesPath: path.resolve(PROJECTDIR, 'build/shelf'),
+			templatesPath: path.resolve(PROJECTDIR, 'build/html'),
+			subTemplatesPath: path.resolve(PROJECTDIR, 'build/html/sub'),
+		};
+
 	};
 
-	_actionTitle(messageText) {
+	/**
+	 * Set a account name and redefine uri
+	 * @param {String} account account name
+	 */
+	setAccount(account) {
 
-		console.log('\n*****************************');
-		message('notice', messageText);
-		console.log('*****************************\n');
+		this.account = account;
+		this.uri = `http://${account}.vtexcommercestable.com.br`;
+		this.baseUri = `${this.account}.vtexcommercestable.com.br`;
+	};
+
+	/**
+	 * Save CSS and JS files on "Portal (/files)" on VTEX
+	 * @param  { { force: Boolean, account: String } } cmd object with cmd commander params/options
+	 * @returns {Array} Array of promises
+	 */
+	setAssetFile({ force, account }) {
+
+		const files = readdirSync(this.localPaths.assetsPath).filter(file => /\.(css|js)$/gmi.test(file));
+		const bar = this.defaultBar(files.length);
+		const lock = this._checklockFile();
+
+		bar.tick(0);
+
+		const genPromises = Cpath => {
+			return new Promise((resolve, reject ) => {
+				readFile(path.resolve(this.localPaths.assetsPath, Cpath), 'utf8', (err, text) => {
+					if(err) throw new Error(err);
+
+					const templateName = `files/${Cpath}`;
+
+					if( this._checkUpload(text, templateName, force, account, lock) ) {
+						bar.tick();
+						return resolve({ templateName, account, type: 'notice' });
+					};
+
+					this.AXIOS
+						.put(`${this.endpoints.setAsset}/${Cpath}`, {
+							path: Cpath,
+							text
+						})
+						.then(( { data } ) => {
+							bar.tick();
+
+							resolve({
+								account,
+								templateName,
+								content: md5(text),
+								type: 'success'
+							});
+							// resolve(Cpath);
+						})
+						.catch(err => {
+							message('error', `Upload File error ${err}`)
+							reject(err)
+						});
+				});
+			});
+		};
+
+		let uploadPromises = files.map(genPromises);
+
+		return uploadPromises;
+	};
+
+
+	/**
+	 * Save CSS and JS files on "CMS (/arquivos)" on VTEX
+	 * @param  {String} requestToken
+	 * @param  { { force: Boolean, account: String } } cmd object with cmd commander params/options
+	 * @returns {Array} Array of promises
+	 */
+	defaultAssets(requestToken, { force, account, file }) {
+
+		let filesFilter = file.split(",") || false;
+
+		console.log(filesFilter);
+
+		let files = readdirSync(this.localPaths.defaultAssetsPath)
+			.filter(file => {
+
+				return /\.(css|js|png|jpg|gif)$/gmi.test(file);
+
+			});
+
+		if(filesFilter) {
+			files = filesFilter;
+		}
+
+		const bar = this.defaultBar(files.length);
+		const lock = this._checklockFile();
+
+		bar.tick(0);
+
+		const genPromises = Cpath => {
+			return new Promise((resolve, reject ) => {
+				// const host = this.baseUri.replace(/(http:|https:|\/)/g, '');
+				const filePath = path.resolve(this.localPaths.defaultAssetsPath, Cpath);
+
+				readFile(filePath, 'utf8', (err, text) => {
+					if(err) throw new Error(err);
+
+					const form = new FormData();
+					const templateName = `arquivos/${Cpath}`;
+
+					if( this._checkUpload(text, templateName, force, account, lock) ) {
+						bar.tick();
+						return resolve({ templateName, account, type: 'notice' });
+					};
+
+					form.append('Filename', Cpath);
+					form.append('fileext', '*.js;*.css');
+					form.append('requestToken', requestToken);
+					form.append('folder', '/uploads');
+					form.append('Upload', 'Submit Query');
+					form.append('Filedata', createReadStream(filePath));
+
+					this.AXIOS.post(this.endpoints.setDefaultAsset, form, {
+						headers: {
+							'Content-Type': form.getHeaders()['content-type']
+						}
+					}).then(res => {
+						if( res.data && res.data.mensagem && res.data.mensagem === 'File(s) saved successfully.' ) {
+							bar.tick();
+
+							resolve({
+								account,
+								templateName,
+								content: md5(text),
+								type: 'success'
+							});
+						} else {
+							const errorMessage = `Upload File error ${filePath} (Error: ${res.status})`;
+
+							message('error', errorMessage);
+							reject(errorMessage);
+						}
+					})
+					.catch(err => {
+						message('error', `Upload File ${filePath} error: ${err}`);
+						reject(err);
+					});
+				});
+
+			});
+		};
+
+		let uploadPromises = files.map(genPromises);
+
+		return uploadPromises;
+	};
+
+	/**
+	 * Get HTML of templates on VTEX CMS
+	 * @param  {Boolean} IsSub specify if want to get subtemplates
+	 * @param  {Boolean} isShelf specify if want to get shelves templates
+	 * @returns {Promise} Promise with templates (in HTML format)
+	 */
+	getHTMLTemplates(IsSub = false, isShelf = false) {
+
+		IsSub = IsSub ? '1' : '0';
+		isShelf = isShelf ? 'shelfTemplate' : 'viewTemplate'
+
+		var uri = `${this.endpoints.getHTMLTemplates}?type=${isShelf}&IsSub=${IsSub}`;
+		var params = qs.stringify({
+					type: isShelf,
+					IsSub
+				});
+
+		return this.AXIOS
+				.post(uri, params, {
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+					}
+				})
+				.then(( { data } ) => {
+
+					this.templates = data;
+					return data;
+				})
+				.catch(err => {
+					message('error', `Get HTML templates error: ${err}`);
+					throw new Error(err);
+				});
+	};
+
+	matchTemplateNameUpload(cmd, templateList) {
+
+		if(!cmd.template) return templateList;
+		if(cmd.create) return "";
+
+		var $ = cheerio.load(templateList);
+
+		const listMatch = $(`.template div:contains("${cmd.template.replace(".html", "")}")`);
+
+		var match = listMatch.filter(function() {
+			return $(this).text() === `${cmd.template.replace(".html", "")}`;
+		});
+
+		return match.parent().html();
+	};
+
+	matchTemplateName(cmd, templateList) {
+
+		if(templateList.includes(cmd.template)) {
+			return [cmd.template];
+		} else {
+
+			if(cmd.create) {
+				message('error', `Template ${cmd.template} does not exist in the VTEX plataform, creating it!`);
+				return [cmd.template];
+			} else {
+				message('error', `Template ${cmd.template} does not exist in the VTEX plataform`);
+				return [];
+			}
+		}
+
+	};
+
+	/**
+	 * Get HTML of a single template on VTEX CMS
+	 * @param  {String} templateId hash with templateId to make a api call
+	 * @param  {Boolean} isShelf specify if want to get shelves template
+	 * @returns {Promise} Promise with a single template formated/decoded HTML
+	 */
+	getHTMLTemplate(templateId, isShelf = false) {
+
+		var url = `${isShelf ? this.endpoints.getShelfTemplate : this.endpoints.getHTMLTemplate}${templateId}`;
+
+		return this.AXIOS
+				.post(url)
+				.then(( { data } ) => {
+
+					const $ = cheerio.load(data),
+						htmlString = $(`#originalTemplate`).val();
+
+					return decode(htmlString);
+				})
+				.catch(err => {
+					message('error', url);
+					message('error', `Get HTML template error: ${err}`);
+					throw new Error(err);
+				});
 	}
-};
 
-module.exports = Actions;
+	/**
+	 * Set file name with the specific HTML
+	 * @param  {Array} files array of file names in your project
+	 * @param  {String} templateList string with html containing the total templates and ids
+	 * @param  {Boolean} isShelf specify if want to get shelves template
+	 * @returns {Array} Array of promises containing a object with file and html decoded
+	 */
+	setTemplateContent(files, templateList, isShelf = false) {
+
+		const $ = cheerio.load(templateList);
+
+		return files.map(file => {
+			return new Promise(resolve => {
+
+				const fileName = this._pathToFileName(file);
+				const templateName = this._sanitizeFileName(fileName);
+				const templateId = this._getTemplateId($, templateName);
+
+				this.getHTMLTemplate(templateId, isShelf)
+					.then(html => resolve({
+						file,
+						html
+					}));
+			});
+		});
+	}
+
+
+	/**
+	 * Set file name with the specific HTML in small chunks
+	 * @param  {Array} files array of file names in your project
+	 * @param  {String} templateList string with html containing the total templates and ids
+	 * @param  {Boolean} isShelf specify if want to get shelves template
+	 * @returns {Promise} A promise containing all promise chunks flatten in a single array
+	 */
+	async setTemplateContentInChunks(files, templateList, isShelf = false) {
+
+		const $ = cheerio.load(templateList);
+
+		let requests = files.slice(0);
+		let results = [];
+		let allPromises = [];
+
+		let resolveChunks = async(chunks, results) => {
+			let curr;
+
+			try {
+
+				curr = await Promise.all(
+					chunks.map(file => {
+
+						var currPromise = new Promise(resolve => {
+
+							const fileName = this._pathToFileName(file);
+							const templateName = this._sanitizeFileName(fileName);
+							const templateId = this._getTemplateId($, templateName);
+
+							this.getHTMLTemplate(templateId, isShelf)
+								.then(html => resolve({
+									file,
+									html
+								}));
+						});
+
+						allPromises.push(currPromise);
+
+						return currPromise;
+					})
+
+				);
+
+				results.push(curr)
+
+			} catch(err) {
+				throw new Error(err);
+			}
+
+			return curr !== undefined && requests.length
+			? await resolveChunks(requests.splice(0, 2), results)
+			: [].concat.apply([], results)
+		}
+
+		return await resolveChunks(requests.splice(0, 2), results)
+			.then(data => {
+
+				return [].concat.apply([], allPromises)
+
+			})
+			.catch(err => console.error(err))
+
+	}
+
+	/**
+	 * Get templates names from VTEX admin HTML
+	 * @param  {String} templateList HTML list of all templates
+	 * @returns {Array} with all template names on VTEX
+	 */
+	getTemplateNames(templateList) {
+
+		const $ = cheerio.load(templateList);
+
+		return $(`.template > div`).map(function() {
+			return $(this).text();
+		}).get();
+	}
+
+	/**
+	 * Get HTML Shelf template by ID on VTEX CMS
+	 * @param  {String} shelfTemplateId UID of Shelf Template
+	 * @returns {Promise} Promise with unique template (in HTML format)
+	 */
+	_getShelfTemplate(shelfTemplateId) {
+
+		return this.AXIOS
+				.post(`${this.endpoints.getShelfTemplates}?shelfTemplateId=${shelfTemplateId}`, qs.stringify({
+					shelfTemplateId
+				}), {
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+					}
+				})
+				.then(( { data } ) => data)
+				.catch(err => {
+					message('error', `Get Shelf template error: ${err}`);
+					throw new Error(err);
+				});
+	};
+
+	/**
+	 * Get Request Token on VTEX CMS HTML
+	 * @returns {Promise} Promise with hash contains RequestToken
+	 */
+	getRequestToken() {
+
+		return this.AXIOS
+				.post(`${this.endpoints.getRequestToken}`)
+				.then(( { data } ) => {
+					const $ = cheerio.load(data);
+					const requestToken = $('#fileUploadRequestToken').val();
+
+					if (!requestToken) {
+						message('error', 'Get RequestToken error');
+						throw new Error('Get RequestToken error');
+					}
+
+					return requestToken;
+				})
+				.catch(err => {
+					message('error', `Get RequestToken error: ${err}`);
+					throw new Error(err);
+				});
+	};
+
+	uniqueID(){
+		function chr4(){
+			return Math.random().toString(16).slice(-4);
+		}
+
+		return chr4() + chr4() +
+		'-' + chr4() +
+		'-' + chr4() +
+		'-' + chr4() +
+		'-' + chr4() + chr4() + chr4();
+	}
+
+	/**
+	 * Save HTML files on VTEX CMS Portal
+	 * @param  {String} templateList HTML with list of templates returned by getHTMLTemplates method
+	 * @param  {Boolean} isSub specify if want to set a subtemplates
+	 * @param  {Boolean} isShelf specify if want to set a shelf template
+	 * @param  { { force: Boolean, account: String } } cmd object with cmd commander params/options
+	 * @returns {Array} Array of promises
+	 */
+	setHTML(templateList, isSub = false, isShelf = false, { force, account, create, template }) {
+
+		const filesDir = isShelf ? this.localPaths.shelvesPath : (isSub ? this.localPaths.subTemplatesPath : this.localPaths.templatesPath);
+		let files = readdirSync(filesDir).filter(file => /\.(html)$/gmi.test(file));
+		var uploadFiles = [];
+
+		if(create && template) {
+			if(files.includes(template)){
+				files = [template];
+			}
+		}
+
+		const $ = cheerio.load(templateList);
+		const bar = this.defaultBar(files.length);
+		const lock = this._checklockFile();
+
+		bar.tick(0);
+		//templateid template:
+		//templateId: 06076ce7-0335-4ee0-a569-d891bd59479e
+		//            e27881c4-f924-b8f7-59d9-525878c7a812
+
+		const genPromises = templateName => {
+			return new Promise((resolve, reject ) => {
+				readFile(path.resolve(filesDir, templateName), 'utf8', (err, template) => {
+
+					if(err) {
+						message('error', err);
+						reject(err);
+						throw new Error(err);
+					}
+
+					templateName = this._sanitizeFileName(templateName);
+
+					if( this._checkUpload(template, templateName, force, account, lock) ) {
+						bar.tick();
+						return resolve({ templateName, account, type: 'notice' });
+					};
+
+
+					var reqData = {};
+
+					if(create) {
+						let templateId = this.uniqueID();
+
+						reqData = {
+							templateName,
+							template,
+							templateId,
+							actionForm: 'Save',
+						};
+
+					} else {
+						const templateId = this._getTemplateId($, templateName);
+
+						reqData = {
+							templateName,
+							template,
+							templateId,
+							actionForm: 'Update',
+						};
+					};
+
+					var reqURI = '';
+
+					if(isShelf) {
+						reqURI = this.endpoints.setShelfTemplate;
+
+						var templateCssClass = "robotCreatedThisTemplate";
+
+						if(!create) {
+							templateCssClass = $('input#templateCssClass').val();
+						}
+
+						this._getShelfTemplate(templateId)
+							.then(data => {
+								const $ = cheerio.load(data);
+
+								return reqData = {
+										...reqData,
+										templateCssClass,
+										roundCorners: false,
+									};
+							})
+							.then(reqData => {
+								this._saveHTMLRequest(reqURI, reqData)
+									.then(( { data } ) => {
+										this._saveHTMLSuccess(data, templateName, bar);
+
+										resolve({
+											templateName,
+											account,
+											content: md5(template),
+											type: 'success'
+										});
+									})
+									.catch(err => {
+										message('error', `Upload Template error ${err}`);
+										reject(err)
+									});
+							})
+							.catch(err => {
+								message('error', ` Get unique shelf error: ${err}`);
+								reject(err);
+							});
+					} else {
+						reqData = {
+							...reqData,
+							isSub,
+							textConfirm: 'yes'
+						};
+
+						reqURI = this.endpoints.setHTMLTemplate;
+
+						this._saveHTMLRequest(reqURI, reqData)
+							.then(( { data } ) => {
+								this._saveHTMLSuccess(data, templateName, bar);
+
+								resolve({
+									templateName,
+									account,
+									content: md5(template),
+									type: 'success'
+								});
+							})
+							.catch(err => {
+								message('error', `Upload Template error ${err}`);
+								reject(err)
+							});
+					}
+				});
+			});
+		};
+
+		let uploadPromises = files.map(genPromises);
+
+		return uploadPromises;
+	};
+
+	/**
+	 * Get templateId from VTEX admin HTML
+	 * @param  {Object} $ cheerio html object
+	 * @param  {String} templateName string contains the current templateName
+	 * @returns {String} Hash with VTEX templateId
+	 */
+	_getTemplateId($, templateName) {
+
+		const listMatch = $(`.template div:contains("${templateName}")`);
+
+		var match = listMatch.filter(function() {
+			return $(this).text() === `${templateName}`;
+		});
+
+		const currTemplate = match.next('a').attr('href');
+
+		try {
+			currTemplate.match(/(templateId=)(.+)$/)[2];
+		} catch(err) {
+			message('error', `Template not found ${templateName}`);
+
+			throw new Error(err);
+		}
+
+		return currTemplate.match(/(templateId=)(.+)$/)[2];
+	};
+
+	/**
+	 * Remove extension of template
+	 * @param  {String} templateName complete file/template name
+	 * @returns {String} File name without extension
+	 */
+	_sanitizeFileName(templateName) {
+
+		return templateName.replace(/\.html|\.css|\.js/gmi, '');
+	}
+
+	/**
+	 * From a full path, get only the file name and extension
+	 * @param  {String} completePath complete path
+	 * @returns {String} File name with extension
+	 */
+	_pathToFileName(completePath) {
+
+		return path.basename(completePath);
+	}
+
+	/**
+	 * Read the lock file and return it, If doesn't exist: create a new one
+	 * @returns { {account: { templateName: { content: String } } } } lock file parsed in object
+	 */
+	_checklockFile() {
+
+		const lock = jsonfile.readFileSync(this.localPaths.lockPath, { throws: false });
+
+		if(!lock) jsonfile.writeFileSync(this.localPaths.lockPath, {});
+
+		return lock;
+	};
+
+	/**
+	 * Check if the template has diff on md5 to indicate if able to upload
+	 * @param  {String} template content of the file/template
+	 * @param  {String} templateName name of the file/template
+	 * @param  {Boolean} force flag to force or not the upload
+	 * @param  {String} account name of the account
+	 * @param  { {account: { templateName: { content: String } } } } lock object containt de lock file
+	 * @returns {Boolean}
+	 */
+	_checkUpload(template, templateName, force, account, lock) {
+
+		return ( !force && lock && lock[account] && lock[account][templateName] && lock[account][templateName].content === md5(template) );
+	};
+
+	/**
+	 * Request POST HTML Save Templates
+	 * @param  {String} reqURI URI to request
+	 * @param  {String} reqData Data to request
+	 * @returns {Promise}
+	 */
+	_saveHTMLRequest(reqURI, reqData) {
+
+		return this.AXIOS
+				.post(reqURI, qs.stringify(reqData), {
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+					}
+				});
+	};
+
+	/**
+	 * Actions on save data on HTML Templates
+	 * @param  {String} data HTML Response of the request
+	 * @param  {String} templateName Current template name to feedback
+	 * @param  {{tick: Function}} bar ProgressBar to upgrade them
+	 */
+	_saveHTMLSuccess(data, templateName, bar) {
+
+		if(data.indexOf('originalMessage') >= 0) {
+			const $ = cheerio.load(data);
+			const err = JSON.parse($('applicationexceptionobject').text());
+
+			message('error', `Error on upload HTML Template (${templateName}): ${err.message}`);
+			message('error', err);
+		} else {
+			bar.tick();
+		}
+	}
+}
+
+module.exports = VtexCMS;
