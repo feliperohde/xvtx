@@ -1,9 +1,4 @@
 # xvtx
-
-![npm](https://img.shields.io/npm/dt/xvtx.svg)
-
-[![NPM](https://nodei.co/npm/xvtx.png)](https://nodei.co/npm/xvtx/)
-
 A simple vtex cli for basic things.
 Hurry up don't waste your time, do these commands in your terminal:
 
@@ -107,8 +102,17 @@ $ xvtx assets
 
 ```
 
+## Change log
+
+### 1.0.20 see more by using "xvtx -h"
+- Added individual file upload by using "--file" argument
+- Added list file upload by using "--file file1.js,file2.css" argument
+- Added individual file upload by using "--template" argument
+- Added template crateing parameter by using "--create true" argument
+
+
 ## Thanks
-This project is a simplified copy of [Guilherme Paiva project], so great thanks to Guilherme Paiva, really.
+This project is a simplified and modified version of [Guilherme Paiva project], so great thanks to Guilherme Paiva, really.
 
 
 ## Next steps
@@ -123,6 +127,10 @@ This project is a simplified copy of [Guilherme Paiva project], so great thanks 
 *CLI task to delete assets files*
 
 *CLI task to delete template files*
+
+*Config file to set template folders*
+
+*Create a changelog and deprecation log*
 
 
 [Guilherme Paiva project]: https://github.com/gfpaiva/jussitb

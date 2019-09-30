@@ -34,7 +34,8 @@ program
 	.description('Auth user and Deploy HTML Templates files on VTEX CMS')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
-	.option('--template <template>', 'Set the template you want to get')
+	.option('--template <template>', 'Set the template you want to upload, only one at a time')
+	.option('--create <bool>', 'if template does not exists, create it!')
 	.action(ACTIONS.uploadHTMLAction);
 
 program
@@ -42,7 +43,8 @@ program
 	.description('Auth user and Deploy HTML Sub Templates files on VTEX CMS')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
-	.option('--template <template>', 'Set the template you want to get')
+	.option('--template <template>', 'Set the template you want to upload, , only one at a time')
+	.option('--create <bool>', 'if template does not exists, create it!')
 	.action(ACTIONS.uploadSubHTMLAction);
 
 program
@@ -50,7 +52,8 @@ program
 	.description('Auth user and Deploy HTML Shelves files on VTEX CMS')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
-	.option('--template <template>', 'Set the template you want to get')
+	.option('--template <template>', 'Set the template you want to upload, , only one at a time')
+	.option('--create <bool>', 'if template does not exists, create it!')
 	.action(ACTIONS.uploadShelfAction);
 
 program

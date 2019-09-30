@@ -116,8 +116,6 @@ class Fs {
 
 	createProjectHTML(templateList, templateType, projectFolderName) {
 
-		console.log("FS.createProjectHTML:", templateList);
-
 		return templateList.map(template => this._writeFilePromise(path.resolve(this.srcPaths.project[templateType](projectFolderName), `${template}.html`), ''));
 	}
 
