@@ -101,19 +101,36 @@ ___
 
 $ xvtx shelf
 
+$ xvtx shelf --template template1.html
+
+$ xvtx shelf --template template1.html --create true
+
 ```
 ___
-*Deploy Assets Files*
+*Deploy Assets Files "/arquivos" only*
 
 ```bash
 
-$ xvtx assets
+$ xvtx defaultAssets
+
+$ xvtx defaultAssets --file file1.js,file.2.css
+
+$ xvtx defaultAssets --file file1.js
+
+```
+
+___
+*List assets that can be uploaded to /arquivos*
+
+```bash
+
+$ xvtx listAssets
 
 ```
 
 ## Change log
 
-### 1.0.21 see more by using "xvtx -h"
+### 1.0.22 see more by using "xvtx [command] -h"
 - Added individual file upload by using "--file" argument
 - Added list file upload by using "--file file1.js,file2.css" argument
 - Added individual file upload by using "--template" argument
