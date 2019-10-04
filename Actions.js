@@ -38,6 +38,7 @@ class Actions {
 		this.syncTemplates = this.syncTemplates.bind(this);
 		this.getTemplate = this.getTemplate.bind(this);
 		this.getArchiveList = this.getArchiveList.bind(this);
+		this.generateConfig = this.generateConfig.bind(this);
 	};
 
 	_checkPath() {
@@ -62,6 +63,18 @@ class Actions {
 	_createFileQuestions(type) {
 		return [
 			{ type: 'input', name: 'name', message: `Enter the name of the ${type}` }
+		];
+	}
+
+	_createConfigQuestions() {
+		return [
+			{ type: 'input', name: 'arquivos', message: `Enter the path of your builded files [/arquivos]`, default: "build/arquivos" },
+			{ type: 'input', name: 'files', message: `Enter the path of your builded files [/files]`, default: "build/files" },
+			{ type: 'input', name: 'html', message: `Enter the path of your builded template HTML files`, default: "build/html" },
+			{ type: 'input', name: 'shelf', message: `Enter the path of your builded template SHELF files`, default: "build/shelf" },
+			{ type: 'input', name: 'sub', message: `Enter the path of your builded template SUB files`, default: "build/html/sub" },
+			{ type: 'input', name: 'account', message: `Enter the your account name {accountname}.myvtex.com`, default: "accountName" },
+			{ type: 'input', name: 'accounthomolog', message: `Enter the your homologation account name {accountname}.myvtex.com`, default: "accountNameHomolog" },
 		];
 	}
 
@@ -134,29 +147,29 @@ class Actions {
 						totalCmd.email = email;
 					}
 
-					if(!template) {
-						newQuestions.push({ type: 'input', name: 'template', message: 'Enter the template name you want to sync or just enter' });
-					} else {
-						totalCmd.template = template;
-					}
+					// if(!template) {
+					// 	newQuestions.push({ type: 'input', name: 'template', message: 'Enter the template name you want to sync or just enter' });
+					// } else {
+					// 	totalCmd.template = template;
+					// }
 
-					if(!html) {
-						newQuestions.push({ type: 'confirm', name: 'html', message: 'Want to sync html root templates?' });
-					} else {
-						totalCmd.html = html;
-					}
+					// if(!html) {
+					// 	newQuestions.push({ type: 'confirm', name: 'html', message: 'Want to sync html root templates?' });
+					// } else {
+					// 	totalCmd.html = html;
+					// }
 
-					if(!sub) {
-						newQuestions.push({ type: 'confirm', name: 'sub', message: 'Want to sync html sub templates?' });
-					} else {
-						totalCmd.sub = sub;
-					}
+					// if(!sub) {
+					// 	newQuestions.push({ type: 'confirm', name: 'sub', message: 'Want to sync html sub templates?' });
+					// } else {
+					// 	totalCmd.sub = sub;
+					// }
 
-					if(!shelf) {
-						newQuestions.push({ type: 'confirm', name: 'shelf', message: 'Want to sync html shelf templates?' });
-					} else {
-						totalCmd.shelf = shelf;
-					}
+					// if(!shelf) {
+					// 	newQuestions.push({ type: 'confirm', name: 'shelf', message: 'Want to sync html shelf templates?' });
+					// } else {
+					// 	totalCmd.shelf = shelf;
+					// }
 
 					return prompt(newQuestions)
 				})
@@ -174,6 +187,30 @@ class Actions {
 				})
 				.catch(err => message('error', `Error on syncing templates: ${err}`));
 	}
+
+	generateConfig() {
+
+		const questions = this._createConfigQuestions();
+		let totalCmd = {};
+
+		return prompt(questions)
+				.then((res) => totalCmd = res)
+				.then(cmd => FS.createConfigFile(cmd))
+				.then(project => message('success', `${project} has been created`))
+				.catch(response => message('error', response))
+				.then(() => {
+					// if(totalCmd.sync) return this.createHTMLLocalFiles(totalCmd);
+					return true;
+				})
+				.then(() => {
+					// this._actionTitle('Installing Dependencies');
+					// const child = exec(`cd ${totalCmd.name} && npm install`).stderr.pipe(process.stderr);
+
+					return true;
+				})
+
+	}
+
 
 	createProject( { account = null } ) {
 
@@ -281,24 +318,24 @@ class Actions {
 
 				return VTEXCMS.getHTMLTemplates()
 						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateList => {console.log(templateList); return templateList;})
-						.then(templateNames => VTEXCMS.matchTemplateName(cmd.template,templateNames))
+						// .then(templateList => {console.log(templateList); return templateList;})
+						.then(templateNames => VTEXCMS.matchTemplateName(cmd,templateNames))
 						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'HTML', isSync ? '' : cmd.name)))
 						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
 						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
 
 						.then(() => VTEXCMS.getHTMLTemplates(true))
 						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateList => {console.log(templateList); return templateList;})
-						.then(templateNames => VTEXCMS.matchTemplateName(cmd.template,templateNames))
+						// .then(templateList => {console.log(templateList); return templateList;})
+						.then(templateNames => VTEXCMS.matchTemplateName(cmd,templateNames))
 						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SUB' , isSync ? '' : cmd.name)))
 						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
 						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))
 
 						.then(() => VTEXCMS.getHTMLTemplates(false, true))
 						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						.then(templateList => {console.log(templateList); return templateList;})
-						.then(templateNames => VTEXCMS.matchTemplateName(cmd.template,templateNames))
+						// .then(templateList => {console.log(templateList); return templateList;})
+						.then(templateNames => VTEXCMS.matchTemplateName(cmd,templateNames))
 						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SHELF' , isSync ? '' : cmd.name)))
 						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates, true))
 						.then(filesHTML => Promise.all(FS.fillProjectHTML(filesHTML)))

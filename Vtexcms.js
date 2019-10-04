@@ -269,6 +269,8 @@ class VtexCMS {
 
 	matchTemplateName(cmd, templateList) {
 
+		if(!cmd.template) return templateList;
+
 		if(templateList.includes(cmd.template)) {
 			return [cmd.template];
 		} else {

@@ -141,6 +141,9 @@ $ xvtx listAssets
 - Added individual file upload by using "--template" argument
 - Added template creation parameter by using "--create true" argument
 
+### 1.0.23
+-  Bugfixes on xvtx syncTemplates
+
 
 
 ## Thanks
@@ -148,6 +151,8 @@ This project is a simplified and modified version of [Guilherme Paiva project], 
 
 
 ## Next steps
+*A method to download a unique template by id or name*
+
 *Template for es6 scripts components*
 
 *Template for new "mundinho" scripts*
