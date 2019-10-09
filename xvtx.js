@@ -82,7 +82,7 @@ program
 	.command('syncTemplates')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
-	.option('--template <template>', 'set template name you want to get')
+	.option('--template <template>', 'set template name you want to get, ex: --template templateName.html, --template templateName')
 	.description('Sync template sctructure with VTEX CMS')
 	.action(ACTIONS.syncTemplates);
 
