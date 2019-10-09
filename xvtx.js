@@ -43,7 +43,8 @@ program
 	.description('Auth user and Deploy HTML Sub Templates files on VTEX CMS')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
-	.option('--template <template>', 'Set the template you want to upload, , only one at a time')
+	.option('--template <template>', 'Set the template you want to upload, only one at a time')
+	.option('--templateClass <string>', 'Set the shelf class')
 	.option('--create <bool>', 'if template does not exists, create it!')
 	.action(ACTIONS.uploadSubHTMLAction);
 
@@ -81,7 +82,7 @@ program
 	.command('syncTemplates')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
-	// .option('--template <template>', 'set template name you want to get')
+	.option('--template <template>', 'set template name you want to get')
 	.description('Sync template sctructure with VTEX CMS')
 	.action(ACTIONS.syncTemplates);
 
@@ -89,6 +90,7 @@ program
 	.command('getTemplate')
 	.option('--account <account>', 'Set the VTEX account name')
 	.option('--email <email>', 'Set the email account')
+	.option('--template <templateName>', 'Set the name of template you wanto to get')
 	.description('Get unique template by name')
 	.action(ACTIONS.getTemplate);
 

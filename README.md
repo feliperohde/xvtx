@@ -56,6 +56,9 @@ ___
 
 $ xvtx syncTemplates
 
+$ xvtx syncTemplates --template template1.html
+to download a unique template
+
 ```
 ___
 
@@ -135,14 +138,19 @@ $ xvtx listAssets
 
 ## Change log
 
+### 1.0.24
+- Added --template parameter in xvtx syncTemplates, usage: "xvtx syncTemplates --template templateName.html"
+- Minor bugfixes
+
+### 1.0.23
+-  Bugfixes on xvtx syncTemplates
+
 ### 1.0.22 see more by using "xvtx [command] -h"
 - Added individual file upload by using "--file" argument
 - Added list file upload by using "--file file1.js,file2.css" argument
 - Added individual file upload by using "--template" argument
 - Added template creation parameter by using "--create true" argument
 
-### 1.0.23
--  Bugfixes on xvtx syncTemplates
 
 
 

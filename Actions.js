@@ -129,11 +129,13 @@ class Actions {
 		const questions = this._createSyncQuestions();
 		let totalCmd = {};
 
-		return prompt(questions)
-
-				.then((res) => totalCmd = res)
-				.then(() => {
 					let newQuestions = [];
+
+					if(!template) {
+						newQuestions.push({ type: 'input', name: 'template', message: 'Enter the template name you want to sync or just enter' });
+					} else {
+						totalCmd.template = template;
+					}
 
 					if(!account) {
 						newQuestions.push({ type: 'input', name: 'account', message: 'Enter the VTEX account' });
@@ -147,11 +149,6 @@ class Actions {
 						totalCmd.email = email;
 					}
 
-					// if(!template) {
-					// 	newQuestions.push({ type: 'input', name: 'template', message: 'Enter the template name you want to sync or just enter' });
-					// } else {
-					// 	totalCmd.template = template;
-					// }
 
 					// if(!html) {
 					// 	newQuestions.push({ type: 'confirm', name: 'html', message: 'Want to sync html root templates?' });
@@ -171,9 +168,10 @@ class Actions {
 					// 	totalCmd.shelf = shelf;
 					// }
 
-					return prompt(newQuestions)
-				})
+			return prompt(newQuestions)
+
 				.then(res => {
+
 					totalCmd = {
 						...totalCmd,
 						...res
@@ -182,7 +180,8 @@ class Actions {
 					return totalCmd;
 				})
 				.then(() => {
-					if(totalCmd.sync) return this.createHTMLLocalFiles(totalCmd, true);
+
+					return this.createHTMLLocalFiles(totalCmd, true);
 					return true;
 				})
 				.catch(err => message('error', `Error on syncing templates: ${err}`));
@@ -318,7 +317,7 @@ class Actions {
 
 				return VTEXCMS.getHTMLTemplates()
 						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						// .then(templateList => {console.log(templateList); return templateList;})
+						.then(templateList => {message('success', `HTML`); return templateList;})
 						.then(templateNames => VTEXCMS.matchTemplateName(cmd,templateNames))
 						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'HTML', isSync ? '' : cmd.name)))
 						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
@@ -326,7 +325,7 @@ class Actions {
 
 						.then(() => VTEXCMS.getHTMLTemplates(true))
 						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						// .then(templateList => {console.log(templateList); return templateList;})
+						.then(templateList => {message('success', `SUB`); return templateList;})
 						.then(templateNames => VTEXCMS.matchTemplateName(cmd,templateNames))
 						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SUB' , isSync ? '' : cmd.name)))
 						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates))
@@ -334,7 +333,7 @@ class Actions {
 
 						.then(() => VTEXCMS.getHTMLTemplates(false, true))
 						.then(templateList => VTEXCMS.getTemplateNames(templateList))
-						// .then(templateList => {console.log(templateList); return templateList;})
+						.then(templateList => {message('success', `SHELF`); return templateList;})
 						.then(templateNames => VTEXCMS.matchTemplateName(cmd,templateNames))
 						.then(templateNames => Promise.all(FS.createProjectHTML(templateNames, 'SHELF' , isSync ? '' : cmd.name)))
 						.then(files => VTEXCMS.setTemplateContentInChunks(files, VTEXCMS.templates, true))

@@ -14,13 +14,14 @@ class Fs {
 	constructor() {
 
 		this.templatePaths = {
-
-			project: path.resolve(DIRNAME, 'templates/project')
+			project: path.resolve(DIRNAME, 'templates/project'),
+			config: path.resolve(DIRNAME, 'templates/config')
 		};
 		this.srcPaths = {
 
 			project: {
 				root: path.resolve(PROJECTDIR),
+				configs: path.resolve(PROJECTDIR, 'configs.json'),
 				style: project => path.resolve(PROJECTDIR, project, 'src/styles'),
 				script: project => path.resolve(PROJECTDIR, project, 'src/scripts'),
 				HTML: project => path.resolve(PROJECTDIR, project, 'src/templates/01 - HTML Templates'),
@@ -71,6 +72,41 @@ class Fs {
 					return resolve(createdFile);
 				});
 			});
+		});
+	}
+
+	createConfigFile( { archives, files, html, shelf, sub, account, accountHomolog } ) {
+
+		return new Promise((resolve, reject) => {
+
+			const configPath = path.resolve(this.srcPaths.project.configs);
+
+			// if(existsSync(configPath)) return reject("File still exists");
+
+			let	cfgFile;
+
+			writeFile(configPath, "", function(err){
+				if (err) throw err;
+
+				console.log('Updated!');
+			});
+
+			console.log(configPath); return;
+			this._copyPastePromise(this.templatePaths.config, configPath)
+				.then(() => {
+					cfgFile = readFileSync(this.srcPaths.project.configs, 'utf8')
+								.replace(/ARQUIVOS/gm, archives)
+								.replace(/FILES/gm, files)
+								.replace(/SHELF/gm, html)
+								.replace(/HTML/gm, shelf)
+								.replace(/SUB/gm, sub)
+								.replace(/PROJECTACCOUNTNAME/gm, account)
+								.replace(/PROJECTACCOUNTNAMEHOMOLOG/gm, accountHomolog);
+
+					return;
+				})
+				.then(() => this._writeFilePromise(configs, cfgFile))
+				.then(() => resolve(configPath))
 		});
 	}
 
